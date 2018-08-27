@@ -4,8 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.Tuple;
 
 import org.springframework.data.domain.Sort.Order;
@@ -35,16 +37,19 @@ public class BaseJpaQueryBean implements Serializable{
 	/**
 	 * 对排序条件进行初始化
 	 */
+	@PostConstruct
 	public void init() {
 		orders=new ArrayList<>();
 		if(sorts!=null) {
-			Stream.of(sorts)
+			orders=Stream.of(sorts)
 				.map(v->{
 					if(v.endsWith("+"))
-						return v;
-					return v;
-				});
-		}
+						return Order.asc(v.substring(0,v.length()-1));
+					if(v.endsWith("-"))
+						return Order.desc(v.substring(0, v.length()-1));
+					return Order.asc(v);
+				}).collect(Collectors.toList());
+		}		
 	}
 
 	public String[] getSorts() {
