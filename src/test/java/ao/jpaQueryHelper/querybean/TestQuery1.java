@@ -10,7 +10,7 @@ import ao.jpaQueryHelper.annotations.Or;
 @JpaQueryBean(entityClass = Book.class, entityName = "Book")
 public class TestQuery1 extends BaseJpaQueryBean{
 	
-	//@CanNull
+	@CanNull
 	@Or
 	private Integer id;
 	@Expression("o.title like :title")
