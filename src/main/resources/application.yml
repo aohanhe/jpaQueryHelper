@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://183.237.21.252:13306/mysqltest
+    username: mysqltest
+    password: mysqltest
+    
+logging:
+  level:
+    org.hibernate.SQL: debug
+  

@@ -128,7 +128,9 @@ public class JpaQueryHelper {
 				.onErrorResume(v -> Flux.error(v)).filter(v -> v.isPresent());
 
 		// 生成查询条件
-		var listCons = flux.map(v -> v.get().middle).toIterable();
+		var listCons = flux.map(v -> v.get().middle).collect(Collectors.toList()).block();
+		listCons.sort((item1,item2)->item1.compareTo(item2));
+		
 		String strCons = Strings.join(listCons, ' ').trim();
 
 		strCons = strCons.replaceFirst("(^or)|(^and)", "").trim();
