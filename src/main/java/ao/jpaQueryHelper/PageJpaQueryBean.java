@@ -6,7 +6,7 @@ package ao.jpaQueryHelper;
  *
  */
 public class PageJpaQueryBean extends BaseJpaQueryBean{
-	private PageInfo pager;
+	private PageInfo pager=new PageInfo();
 
 	public PageInfo getPager() {
 		return pager;

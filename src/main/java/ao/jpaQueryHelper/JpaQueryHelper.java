@@ -46,15 +46,28 @@ public class JpaQueryHelper {
 	private static Logger logger = LoggerFactory.getLogger(JpaQueryHelper.class);
 
 	/**
-	 * 通过查询bean创建查询对象
-	 * 
-	 * @param em
-	 * @param queryBean
-	 * @param reClass
+	 * 通过查询bean构建查询指令
+	 * @param em 实体管理对象
+	 * @param queryBean 查询对象	
+	 * @param reClass 返回的对象类型
 	 * @return
 	 * @throws JpaQueryHelperException
 	 */
 	public static <T> TypedQuery<T> createQueryFromBean(EntityManager em, BaseJpaQueryBean queryBean, Class<T> reClass)
+			throws JpaQueryHelperException {
+		return createQueryFromBean(em, queryBean,null, reClass);
+	}
+	
+	/**
+	 * 通过查询bean构建查询指令
+	 * @param em 实体管理对象
+	 * @param queryBean 查询对象
+	 * @param namedEntityGraph 用于优化联表查询的namedEntityGraph
+	 * @param reClass 返回的对象类型
+	 * @return
+	 * @throws JpaQueryHelperException
+	 */
+	public static <T> TypedQuery<T> createQueryFromBean(EntityManager em, BaseJpaQueryBean queryBean,String namedEntityGraph, Class<T> reClass)
 			throws JpaQueryHelperException {
 		// 1 取得关联的实体对象的类及名称
 		if (queryBean == null)
@@ -72,7 +85,7 @@ public class JpaQueryHelper {
 			entityName = entityClass.getSimpleName();
 
 		// 2 创建查询主体
-		String query = String.format("select o from %s as o ", entityName);
+		String query = String.format("select o from %s as o", entityName);
 
 		// 3 添加查询条件
 		var condsTupe = createWhereFromBean(queryBean);
@@ -83,11 +96,15 @@ public class JpaQueryHelper {
 		String orders = createOrderStrFromBean(queryBean).trim();
 
 		// 创建查询对象
-		var queryStr = query + conds + orders;
+		var queryStr = query +" "+ conds +" "+ orders;
 
 		logger.debug("create query:" + queryStr);
 
 		var res = em.createQuery(queryStr, reClass);
+		
+		if(!Strings.isBlank(namedEntityGraph))
+			res.setHint("javax.persistence.loadgraph", namedEntityGraph);
+			
 		condsTupe.getRight().forEach((path, value) -> {
 			var hasParam=
 					Flux.fromIterable(res.getParameters())
@@ -204,8 +221,10 @@ public class JpaQueryHelper {
 		var list = Flux.fromIterable(queryBean.getOrders())
 				.map(v -> JpaQueryHelper.createOrderProperty(queryBean.getClass(), v)).collect(Collectors.toList());
 		
+		var res=String.join(",", list.block()).trim();
+		if(Strings.isBlank(res)) return "";
 
-		return String.join(",", list.block());
+		return " order by "+res;
 	}
 
 	/**
@@ -217,11 +236,14 @@ public class JpaQueryHelper {
 	 */
 	private static String createOrderProperty(Class classInfo, Order order) {
 		try {
-			var field = classInfo.getField(order.getProperty());
+			var field = classInfo.getDeclaredField(order.getProperty());
+			
 			var entityPath = field.getAnnotation(EntityPath.class);
 			String path = order.getProperty();
 			if (entityPath != null)
 				path = entityPath.value();
+			
+			if(!path.startsWith("o.")) path="o."+path;
 
 			return path + " " + order.getDirection().toString();
 

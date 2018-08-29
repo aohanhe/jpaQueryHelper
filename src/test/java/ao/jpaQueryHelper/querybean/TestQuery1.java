@@ -2,13 +2,14 @@ package ao.jpaQueryHelper.querybean;
 
 import ao.jpaQueryHelper.BaseJpaQueryBean;
 import ao.jpaQueryHelper.Book;
+import ao.jpaQueryHelper.PageJpaQueryBean;
 import ao.jpaQueryHelper.annotations.CanNull;
 import ao.jpaQueryHelper.annotations.Expression;
 import ao.jpaQueryHelper.annotations.JpaQueryBean;
 import ao.jpaQueryHelper.annotations.Or;
 
 @JpaQueryBean(entityClass = Book.class, entityName = "Book")
-public class TestQuery1 extends BaseJpaQueryBean{
+public class TestQuery1 extends PageJpaQueryBean{
 	
 	@CanNull
 	@Or

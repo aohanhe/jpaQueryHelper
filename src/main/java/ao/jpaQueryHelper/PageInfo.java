@@ -6,8 +6,8 @@ package ao.jpaQueryHelper;
  *
  */
 public class PageInfo {
-	private int page;
-	private int size;
+	private int page=1;
+	private int size=10;
 	
 	public int getPage() {
 		return page;
