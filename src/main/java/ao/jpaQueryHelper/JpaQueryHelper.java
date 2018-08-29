@@ -1,14 +1,9 @@
 package ao.jpaQueryHelper;
 
 import java.lang.reflect.Field;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
@@ -17,14 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.stereotype.Component;
-import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import org.springframework.util.StringUtils;
-
-import com.jayway.jsonpath.Option;
 
 import ao.jpaQueryHelper.annotations.CanNull;
 import ao.jpaQueryHelper.annotations.EntityPath;

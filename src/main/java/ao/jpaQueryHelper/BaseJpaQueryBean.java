@@ -2,19 +2,15 @@ package ao.jpaQueryHelper;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
-import javax.persistence.Tuple;
-
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
-import net.minidev.json.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 /**
  * »ù´¡jpa²éÑ¯bean

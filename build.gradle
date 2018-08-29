@@ -30,6 +30,27 @@ dependencies {
 	compile('com.sun.xml.bind:jaxb-impl:2.3.0.1')
 	compile('com.sun.xml.bind:jaxb-core:2.3.0.1')
 	compile('javax.activation:activation:1.1.1')
+	compile('org.apache.commons:commons-lang3:3.8')
+	compile('io.projectreactor:reactor-core')
+	compile('com.fasterxml.jackson.core:jackson-annotations')
 	runtime('mysql:mysql-connector-java')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+jar {
+	enabled = true	    
+}
+
+bootJar {
+	classifier = 'boot'	
+}
+
+springBoot {
+	mainClassName = 'ao.jpaQueryHelper.JpaQueryHelperApplication'	
+}
+
+tasks.withType(JavaCompile) {
+
+    options.encoding = 'GBK'
+
 }
