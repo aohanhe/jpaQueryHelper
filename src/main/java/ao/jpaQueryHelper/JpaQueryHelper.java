@@ -1,8 +1,11 @@
 package ao.jpaQueryHelper;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -44,7 +47,7 @@ public class JpaQueryHelper {
 	 */
 	public static <T> TypedQuery<T> createQueryFromBean(EntityManager em, BaseJpaQueryBean queryBean, Class<T> reClass)
 			throws JpaQueryHelperException {
-		return createQueryFromBean(em, queryBean,null, reClass);
+		return createQueryFromBean(em, queryBean,null,null, reClass);
 	}
 	
 	/**
@@ -56,7 +59,11 @@ public class JpaQueryHelper {
 	 * @return
 	 * @throws JpaQueryHelperException
 	 */
-	public static <T> TypedQuery<T> createQueryFromBean(EntityManager em, BaseJpaQueryBean queryBean,String namedEntityGraph, Class<T> reClass)
+	public static <T> TypedQuery<T> createQueryFromBean(EntityManager em,
+			BaseJpaQueryBean queryBean,
+			String namedEntityGraph,
+			Consumer<List<Optional<ImmutableTriple<String, String, Object>>>> initConditions,
+			Class<T> reClass)
 			throws JpaQueryHelperException {
 		// 1 取得关联的实体对象的类及名称
 		if (queryBean == null)
@@ -76,8 +83,16 @@ public class JpaQueryHelper {
 		// 2 创建查询主体
 		String query = String.format("select o from %s as o", entityName);
 
+		var exConds=new ArrayList<Optional<ImmutableTriple<String, String, Object>>>();
+		
+		if(initConditions!=null)
+		{
+			initConditions.accept(exConds);
+		}
+		
+		
 		// 3 添加查询条件
-		var condsTupe = createWhereFromBean(queryBean);
+		var condsTupe = createWhereFromBean(queryBean,exConds);
 		String conds = condsTupe.getLeft().trim();
 		if (!Strings.isEmpty(conds))
 			conds = "where " + conds;
@@ -125,16 +140,24 @@ public class JpaQueryHelper {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Pair<String, HashMap<String, Object>> createWhereFromBean(BaseJpaQueryBean queryBean) {
+	private static Pair<String, HashMap<String, Object>> createWhereFromBean(BaseJpaQueryBean queryBean,
+			List<Optional<ImmutableTriple<String, String, Object>>> extendConditions
+			) {
 
 		HashMap<String, Object> pars = new HashMap<>();
 
 		var classInfo = queryBean.getClass();
-		var flux = Flux.fromArray(classInfo.getDeclaredFields()).map(v -> createConditionFromField(queryBean, v))
-				.onErrorResume(v -> Flux.error(v)).filter(v -> v.isPresent());
+		var flux = Flux.fromArray(classInfo.getDeclaredFields())
+				.map(v -> createConditionFromField(queryBean, v))
+				.concatWith(Flux.fromIterable(extendConditions))
+				.filter(v -> v.isPresent())				
+				;
 
 		// 生成查询条件
 		var listCons = flux.map(v -> v.get().middle).collect(Collectors.toList()).block();
+		
+		
+		
 		listCons.sort((item1,item2)->item1.compareTo(item2));
 		
 		String strCons = Strings.join(listCons, ' ').trim();
@@ -161,6 +184,7 @@ public class JpaQueryHelper {
 			BaseJpaQueryBean queryBean, Field field) {
 
 		try {
+			
 
 			boolean isAnd = !field.isAnnotationPresent(Or.class);
 			boolean isCanNull = field.isAnnotationPresent(CanNull.class);

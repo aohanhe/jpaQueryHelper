@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaQuery;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,9 +38,9 @@ public class JpaQueryHelperApplicationTests {
 		
 		querybean.init();
 		
-		JpaQueryHelper.createQueryFromBean(em, querybean, Book.class)
-			.getResultList().forEach(System.out::println);
-		;
+		var re=JpaQueryHelper.createQueryFromBean(em, querybean, Book.class);
+		
+		
 		
 		
 	}
