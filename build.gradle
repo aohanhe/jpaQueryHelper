@@ -1,8 +1,10 @@
 buildscript {
 	ext {
-		springBootVersion = '2.0.4.RELEASE'
+		springBootVersion = '2.1.0.M2'
 	}
 	repositories {
+		maven { url "https://repo.spring.io/snapshot" }
+		maven { url "https://repo.spring.io/milestone" }
 		mavenCentral()
 	}
 	dependencies {
@@ -20,11 +22,14 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 10
 
 repositories {
+	maven { url "https://repo.spring.io/snapshot" }
+	maven { url "https://repo.spring.io/milestone" }
 	mavenCentral()
 }
 
 
 dependencies {
+	compile('com.querydsl:querydsl-jpa:4.2.1')
 	compile('org.springframework.boot:spring-boot-starter-data-jpa')
 	compile('javax.xml.bind:jaxb-api')
 	compile('com.sun.xml.bind:jaxb-impl:2.3.0.1')

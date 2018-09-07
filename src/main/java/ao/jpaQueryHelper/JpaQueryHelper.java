@@ -23,6 +23,7 @@ import ao.jpaQueryHelper.annotations.EntityPath;
 import ao.jpaQueryHelper.annotations.Expression;
 import ao.jpaQueryHelper.annotations.JpaQueryBean;
 import ao.jpaQueryHelper.annotations.Or;
+import ao.jpaQueryHelper.annotations.QueryExpression;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
@@ -81,7 +82,13 @@ public class JpaQueryHelper {
 			entityName = entityClass.getSimpleName();
 
 		// 2 创建查询主体
-		String query = String.format("select o from %s as o", entityName);
+		var queryExpression = reClass.getAnnotation(QueryExpression.class);
+		String query =null;
+		if(queryExpression!=null) {
+			query=queryExpression.value();
+		}else {
+			query = String.format("select o from %s as o", entityName);
+		}
 
 		var exConds=new ArrayList<Optional<ImmutableTriple<String, String, Object>>>();
 		
