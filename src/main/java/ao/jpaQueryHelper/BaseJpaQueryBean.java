@@ -11,6 +11,8 @@ import org.springframework.data.domain.Sort.Order;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModelProperty;
+
 
 /**
  * 基础jpa查询bean
@@ -18,12 +20,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  */
 public class BaseJpaQueryBean implements Serializable{ 
+	@ApiModelProperty(name="排序条件",value="排序条件 例+id,+表示升序 - 表示降序")
+	private String sort;
 	
-	/**
-	 * 排序字段列表
-	 */
-	private String[] sorts;
-	
+
 	/**
 	 * 处理后的排序字段
 	 */
@@ -36,8 +36,8 @@ public class BaseJpaQueryBean implements Serializable{
 	@PostConstruct
 	public void init() {
 		orders=new ArrayList<>();
-		if(sorts!=null) {
-			orders=Stream.of(sorts)
+		if(sort!=null) {
+			orders=Stream.of(sort.split(","))
 				.map(v->{
 					if(v.endsWith("+"))
 						return Order.asc(v.substring(0,v.length()-1));
@@ -48,18 +48,18 @@ public class BaseJpaQueryBean implements Serializable{
 		}		
 	}
 
-	public String[] getSorts() {
-		return sorts;
-	}
-
-	public void setSorts(String[] sorts) {
-		this.sorts = sorts;
-	}
+	
 
 	public List<Order> getOrders() {
 		return orders;
 	}
 
-	
+	public String getSort() {
+		return sort;
+	}
+
+	public void setSort(String sort) {
+		this.sort = sort;
+	}
 	
 }

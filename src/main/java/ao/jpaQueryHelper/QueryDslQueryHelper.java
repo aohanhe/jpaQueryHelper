@@ -73,12 +73,13 @@ public class QueryDslQueryHelper {
 		
 		// 添加分页处理
 		if(queryBean instanceof PageJpaQueryBean) {
-			var pager=((PageJpaQueryBean)queryBean).getPager();
+			var page=((PageJpaQueryBean)queryBean).getPage();
+			var size=((PageJpaQueryBean)queryBean).getLimit();
 			
-			int skip = (pager.getPage() - 1) * pager.getSize();
+			int skip = (page - 1) * size;
 
-			logger.debug("set pagesize=" + pager.getSize() + " page=" + pager.getPage());
-			reQuery=reQuery.offset(skip).limit(pager.getSize());
+			logger.debug("set pagesize=" + size + " page=" + page);
+			reQuery=reQuery.offset(skip).limit(size);
 		}
 				
 		

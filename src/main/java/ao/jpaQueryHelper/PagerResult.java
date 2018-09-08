@@ -16,10 +16,10 @@ public class PagerResult <T> {
 	private Flux<T> dataList;
 	
 	
-	public PagerResult(PageInfo pageInfo,long total,Flux<T> list) {
-		this.currentPage=pageInfo.getPage();
+	public PagerResult(int page,int pageSize,long total,Flux<T> list) {
+		this.currentPage=page;
 		this.total = total;
-		this.pageCount=(int) Math.ceil((double)total/(double)pageInfo.getSize());
+		this.pageCount=(int) Math.ceil((double)total/(double)pageSize);
 		this.dataList=list;
 	}
 	

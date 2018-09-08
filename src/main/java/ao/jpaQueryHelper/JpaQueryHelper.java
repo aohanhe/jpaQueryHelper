@@ -128,12 +128,13 @@ public class JpaQueryHelper {
 
 		// 如果是分页查询，则添加分页信息
 		if (queryBean instanceof PageJpaQueryBean) {
-			var pager = ((PageJpaQueryBean) queryBean).getPager();
-			int skip = (pager.getPage() - 1) * pager.getSize();
+			var page = ((PageJpaQueryBean) queryBean).getPage();
+			var size=((PageJpaQueryBean) queryBean).getLimit();
+			int skip = (page - 1) * size;
 
-			logger.debug("set pagesize=" + pager.getSize() + " page=" + pager.getPage());
+			logger.debug("set pagesize=" + size + " page=" + page);
 
-			res.setMaxResults(pager.getSize());
+			res.setMaxResults(size);
 			res.setFirstResult(skip);
 		}
 

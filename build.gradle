@@ -29,6 +29,7 @@ repositories {
 
 
 dependencies {
+	compile("io.springfox:springfox-swagger2:2.9.2")
 	compile('com.querydsl:querydsl-jpa:4.2.1')
 	compile('org.springframework.boot:spring-boot-starter-data-jpa')
 	compile('javax.xml.bind:jaxb-api')

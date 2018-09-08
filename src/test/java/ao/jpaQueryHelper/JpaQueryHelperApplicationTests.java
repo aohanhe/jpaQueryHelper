@@ -32,9 +32,9 @@ public class JpaQueryHelperApplicationTests {
 		
 		querybean.setTitle("%");
 		
-		var orders=new String[] {"id-","title+"};
+		var orders="id-,title+";
 		
-		querybean.setSorts(orders);
+		querybean.setSort(orders);
 		
 		querybean.init();
 		
