@@ -1,6 +1,9 @@
 package ao.jpaQueryHelper;
 
+
+
 import java.util.List;
+import java.util.stream.Collector;
 
 import reactor.core.publisher.Flux;
 
@@ -13,14 +16,15 @@ public class PagerResult <T> {
 	private long total;
 	private int pageCount;
 	private int currentPage;
-	private Flux<T> dataList;
+	private List<T> items;
 	
 	
 	public PagerResult(int page,int pageSize,long total,Flux<T> list) {
 		this.currentPage=page;
 		this.total = total;
 		this.pageCount=(int) Math.ceil((double)total/(double)pageSize);
-		this.dataList=list;
+		
+		this.items=list.collectList().block();
 	}
 	
 	public long getTotal() {
@@ -45,12 +49,9 @@ public class PagerResult <T> {
 		this.pageCount = pageCount;
 	}
 
-	public Flux<T> getDataList() {
-		return dataList;
+	public List<T> getItems() {
+		return items;
 	}
 
-	public void setDataList(Flux<T> dataList) {
-		this.dataList = dataList;
-	}
 
 }

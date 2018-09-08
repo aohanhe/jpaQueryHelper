@@ -3,7 +3,7 @@ package ao.jpaQueryHelper;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -18,6 +18,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 
 import com.querydsl.core.types.Constant;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
@@ -50,7 +51,9 @@ public class QueryDslQueryHelper {
 	 * @return
 	 * @throws JpaQueryHelperException
 	 */
-	public static JPAQuery<Tuple> initPredicateAndSortFromQueryBean(JPAQuery<Tuple> query,BaseJpaQueryBean queryBean) throws JpaQueryHelperException {
+	public static<T> JPAQuery<Tuple> initPredicateAndSortFromQueryBean(JPAQuery<Tuple> query,
+			BaseJpaQueryBean queryBean,
+			Expression<?> mainExpression) throws JpaQueryHelperException {
 		
 		var beanInfo = queryBean.getClass().getAnnotation(JpaQueryBean.class);
 		if (beanInfo == null)
@@ -62,7 +65,7 @@ public class QueryDslQueryHelper {
 		
 
 		// 通过查询bean生成查询条件
-		var pre=createWhereFromQueryBean(queryBean, entityClass, entityName);
+		var pre=createWhereFromQueryBean(queryBean, entityClass, entityName,mainExpression);
 		
 		var reQuery=query.where(pre);
 		
@@ -93,19 +96,26 @@ public class QueryDslQueryHelper {
 	 * @param entityName
 	 * @return
 	 */
-	private static BooleanBuilder createWhereFromQueryBean(BaseJpaQueryBean queryBean,Class<?> entityType,String entityName) {
+	private static BooleanBuilder createWhereFromQueryBean(BaseJpaQueryBean queryBean,
+			Class<?> entityType,String entityName,Expression<?> mainExpression) {
 		
 		//从属性生成查询条件
 		var classInfo = queryBean.getClass();
-		var flux = Flux.fromArray(classInfo.getDeclaredFields())
-				.map(v -> createConditionFromField(queryBean, v,entityType,entityName))
-				.sort((item1,item2)->item1.block().getLeft().compareTo(item2.block().getLeft()));
+		
+		var flux=Flux.fromArray(classInfo.getDeclaredFields())
+				.map(v -> createConditionFromField(queryBean, v,entityType,entityName,mainExpression))
+				.filter(v->v.isPresent())
+				.sort((item1,item2)->item1.get().getLeft().compareTo(item2.get().getLeft()))				
+				;
 		
 		BooleanBuilder builder=new BooleanBuilder();
 		
+		
+		
 		//将所有条件组合
 		flux.subscribe(v->{
-			var item=v.block();
+			if(v==null) return;
+			var item=v.get();
 			boolean isAnd=item.getLeft().equals('a');
 			
 			if(isAnd)
@@ -113,6 +123,8 @@ public class QueryDslQueryHelper {
 			else
 				builder.or(item.getRight());	
 			
+		},ex->{
+			System.out.println(ex.getMessage());
 		});
 		
 		return builder;
@@ -171,8 +183,8 @@ public class QueryDslQueryHelper {
 	
 
 	@SuppressWarnings("rawtypes")
-	private static Mono<Pair<Character, Predicate>>  createConditionFromField(BaseJpaQueryBean queryBean, 
-			Field field,Class<?> entityType,String entityName) {
+	private static Optional<Pair<Character, Predicate>>  createConditionFromField(BaseJpaQueryBean queryBean, 
+			Field field,Class<?> entityType,String entityName,Expression<?> mainExpression) {
 
 		try {
 			boolean isAnd = !field.isAnnotationPresent(Or.class);
@@ -184,7 +196,9 @@ public class QueryDslQueryHelper {
 			Object value = field.get(queryBean);
 			
 			if (value == null && !isCanNull)
-				return Mono.never();
+				return Optional.empty();
+			if((value instanceof String)&&Strings.isBlank(value.toString()))
+				return Optional.empty();
 			
 			DslPredicateMehtod method=field.getAnnotation(DslPredicateMehtod.class);
 			
@@ -193,9 +207,10 @@ public class QueryDslQueryHelper {
 			
 			//如果没有配置基础的条件表达式
 			if(method==null) {
-				Path root=Expressions.path(entityType, entityName);				
-				Path nodePath=Expressions.path(field.getType(),root, name);
+							
+				Path nodePath=Expressions.path(field.getType(),(Path)mainExpression, name);
 				Constant constant=(Constant) Expressions.constant(value);
+												
 				re=Expressions.predicate(Ops.EQ, nodePath,constant);
 			}else {
 				//如果配置了表达式函数，则调用函数生成表达式
@@ -203,7 +218,7 @@ public class QueryDslQueryHelper {
 				re=(Predicate) preMethod.invoke(queryBean);
 			}
 			
-			return Mono.just(Pair.of(isAnd?'a':'o', re));
+			return Optional.of(Pair.of(isAnd?'a':'o', re));
 
 		} catch (Exception ex) {
 			logger.error("构建queryBean的查询条件时出错:" + ex.getMessage(), ex);

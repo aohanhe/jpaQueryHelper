@@ -13,10 +13,11 @@ import com.querydsl.jpa.impl.JPAQuery;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class SelectExpressionCollection <T>{
+public abstract class SelectExpressionCollection <T>{
 	private ArrayList<SelectExpressionItem<T>> list=new ArrayList<>();
 	private Class<T> classType;
-	private Expression<T> mainExpression;
+	protected Expression<T> mainExpression;
+	
 	
 	/**
 	 * 构造集合
@@ -25,7 +26,10 @@ public class SelectExpressionCollection <T>{
 	public SelectExpressionCollection(Expression mainExpression,Class<T> type) {
 		this.classType=type;
 		this.mainExpression = mainExpression;
+		
 	}
+	
+	
 	
 	
 	/**
@@ -91,18 +95,37 @@ public class SelectExpressionCollection <T>{
 	}
 	
 	/**
+	 * 处理扩展数据列表
+	 * @return
+	 */
+	protected abstract Expression[] getExtendsExpression() ;
+	
+	/**
 	 * 取得表达式的列表
 	 * @return
 	 */
 	public Expression[] getExpressionArray() {
+		var flux=Flux.fromIterable(this.list)
+				.map(v->v.express).collect(Collectors.toList()).block();
+		
+		var exteds=this.getExtendsExpression();
+		if(exteds==null)
+			exteds=new Expression[] {};
+		
 		var res=Flux.concat(Flux.just(this.mainExpression),
 				Flux.fromIterable(this.list)
-					.map(v->v.express))			
+					.map(v->v.express)
+					,Flux.just(exteds))			
 				.collect(Collectors.toList())
 				.block();
 		return res.toArray(new Expression[]{});
 	}
 	
+	/**
+	 * 处理扩展数据提取
+	 * @param tuple
+	 */
+	protected abstract void onFectionExtendsDataItem(T item,Tuple tuple);
 	
 	/**
 	 * 从选择列配置信息中提取赋值后的数据项
@@ -121,7 +144,25 @@ public class SelectExpressionCollection <T>{
 			dataItem.field.set(item, tuple.get(dataItem.express));
 		}		
 		
+		onFectionExtendsDataItem(item, tuple);
+		
 		return item;
 	}
+	
+	/**
+	 * 添加扩展的联结查询
+	 * @param query
+	 * @return
+	 */
+	public JPAQuery<Tuple>  addExtendsLeftJoin(JPAQuery<Tuple> query) {
+		return onAddExtendsLeftJoin(query);
+	}
+	
+	/**
+	 * 处理扩展联结查询
+	 * @param query
+	 * @return
+	 */
+	protected abstract JPAQuery<Tuple>   onAddExtendsLeftJoin(JPAQuery<Tuple> query);
 	
 }
