@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author aohan
  *
  */
-public class BaseJpaQueryBean implements Serializable{
+public class BaseJpaQueryBean implements Serializable{ 
 	
 	/**
 	 * ÅÅÐò×Ö¶ÎÁÐ±í
