@@ -17,5 +17,10 @@ public @interface EntityPath {
 	 * 路径值 例如 author.name
 	 * @return
 	 */
-	String value();
+	String name() default "";
+	/**
+	 * 与IRootPathsManger 中主健关联的 实体路径
+	 * @return
+	 */
+	int rootPath() default 0;
 }

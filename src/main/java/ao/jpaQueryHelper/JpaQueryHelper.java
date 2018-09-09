@@ -211,7 +211,7 @@ public class JpaQueryHelper {
 
 			EntityPath entityPath = field.getAnnotation(EntityPath.class);
 			if (entityPath != null) {
-				path = entityPath.value();
+				path = entityPath.name();
 			}
 
 			String exp = value==null? String.format("(o.%s is null)", path) :String.format("(o.%s=:%s)", path, name);
@@ -266,7 +266,7 @@ public class JpaQueryHelper {
 			var entityPath = field.getAnnotation(EntityPath.class);
 			String path = order.getProperty();
 			if (entityPath != null)
-				path = entityPath.value();
+				path = entityPath.name();
 			
 			if(!path.startsWith("o.")) path="o."+path;
 

@@ -18,4 +18,9 @@ public @interface JpaQueryBean {
 	 * @return
 	 */
 	Class<?> entityClass();	
+	/**
+	 * 与IRootPathsManger 中主健关联的 实体路径
+	 * @return
+	 */
+	int mainRootPath() default 0;
 }

@@ -12,8 +12,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
+import org.springframework.stereotype.Service;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -43,8 +45,12 @@ import reactor.core.publisher.Mono;
  * @author aohanhe
  *
  */
+@Service
 public class QueryDslQueryHelper {
 	private static Logger logger = LoggerFactory.getLogger(QueryDslQueryHelper.class);
+	
+	@Autowired
+	private IRootPathsManger pathManger;
 
 	/**
 	 * 通过查询对象生成查询处理器
@@ -54,14 +60,21 @@ public class QueryDslQueryHelper {
 	 * @return
 	 * @throws JpaQueryHelperException
 	 */
-	public static <T> JPAQuery<Tuple> initPredicateAndSortFromQueryBean(JPAQuery<Tuple> query,
-			BaseJpaQueryBean queryBean, Expression<?> mainExpression) throws JpaQueryHelperException {
+	public  <T> JPAQuery<Tuple> initPredicateAndSortFromQueryBean(JPAQuery<Tuple> query,
+			BaseJpaQueryBean queryBean) throws JpaQueryHelperException {
 
 		var beanInfo = queryBean.getClass().getAnnotation(JpaQueryBean.class);
 		if (beanInfo == null)
 			throw new JpaQueryHelperException(
 					String.format("bean类%s没有添加@JpaQueryBean注解", queryBean.getClass().getName()));
 
+		// 取得主类的path id
+		Expression<?> mainExpression=this.pathManger.getRootPathById(beanInfo.mainRootPath());
+		if(mainExpression==null)
+			throw new JpaQueryHelperException(
+					String.format("bean类%s的@JpaQueryBean注解的mainRootPath值%d不正确,没有找到定义的路径"
+							, queryBean.getClass().getName(),beanInfo.mainRootPath()));
+		
 		Class<?> entityClass = beanInfo.entityClass();
 		
 		// 通过查询bean生成查询条件
@@ -96,7 +109,7 @@ public class QueryDslQueryHelper {
 	 * @param entityName
 	 * @return
 	 */
-	private static BooleanBuilder createWhereFromQueryBean(BaseJpaQueryBean queryBean, Class<?> entityType,
+	private  BooleanBuilder createWhereFromQueryBean(BaseJpaQueryBean queryBean, Class<?> entityType,
 			 Expression<?> mainExpression) {
 
 		// 从属性生成查询条件
@@ -136,7 +149,7 @@ public class QueryDslQueryHelper {
 	 * @param entityName
 	 * @return
 	 */
-	private static List<OrderSpecifier> createOrderFromQueryBean(BaseJpaQueryBean queryBean, Class<?> entityType,
+	private  List<OrderSpecifier> createOrderFromQueryBean(BaseJpaQueryBean queryBean, Class<?> entityType,
 			Expression<?> mainExpression) {
 		if (queryBean.getOrders() == null)
 			return null;
@@ -154,7 +167,7 @@ public class QueryDslQueryHelper {
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static OrderSpecifier createOrderProperty(Order order, BaseJpaQueryBean queryBean,
+	private  OrderSpecifier createOrderProperty(Order order, BaseJpaQueryBean queryBean,
 			Class<?> entityType,Expression<?> mainExpression) {
 		try {
 			Class<?> classType = queryBean.getClass();
@@ -164,15 +177,18 @@ public class QueryDslQueryHelper {
 			String name=order.getProperty();
 
 			var entityPath=field.getAnnotation(EntityPath.class);
-			if(entityPath!=null)
-				name=entityPath.value();
-			
+			int rootId=0;
+			if(entityPath!=null) {
+				if(!Strings.isBlank(entityPath.name()))
+					name=entityPath.name();
+				rootId=entityPath.rootPath();
+			}
 
 			var dslPr = field.getAnnotation(DslPredicateMehtod.class);
 			// 如果用户没有定义，则使用默认的定义
 			OrderSpecifier re = null;
 			if (dslPr == null || Strings.isBlank(dslPr.orderMehtod())) {
-				Path root = (Path)mainExpression;
+				Path root = rootId <= 0 ? (Path)mainExpression  : (Path) this.pathManger.getRootPathById(rootId) ;
 				Path nodePath = Expressions.path(field.getType(), root, name);
 				re = new OrderSpecifier(order.getDirection() == Direction.ASC ? com.querydsl.core.types.Order.ASC
 						: com.querydsl.core.types.Order.DESC, nodePath);
@@ -190,7 +206,7 @@ public class QueryDslQueryHelper {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private static Optional<Pair<Character, Predicate>> createConditionFromField(BaseJpaQueryBean queryBean,
+	private  Optional<Pair<Character, Predicate>> createConditionFromField(BaseJpaQueryBean queryBean,
 			Field field, Class<?> entityType,  Expression<?> mainExpression) {
 
 		try {
@@ -210,8 +226,12 @@ public class QueryDslQueryHelper {
 			
 			// 如果路径名修改了，使用修改的路径名
 			var entityPath=field.getAnnotation(EntityPath.class);
-			if(entityPath!=null)
-				name=entityPath.value();
+			int rootId=0;
+			if(entityPath!=null) {
+				if(!Strings.isBlank(entityPath.name()))
+					name=entityPath.name();
+				rootId=entityPath.rootPath();
+			}
 
 			field.setAccessible(true);// 设置充许访问
 			Object value = field.get(queryBean);
@@ -230,7 +250,9 @@ public class QueryDslQueryHelper {
 
 			// 如果没有配置基础的条件表达式
 			if (method == null) {
-				Path nodePath = Expressions.path(field.getType(), (Path) mainExpression, name);
+				Path nodePath = Expressions.path(field.getType(), 
+						rootId<=0? (Path) mainExpression:(Path)this.pathManger.getRootPathById(rootId), 
+						name);
 
 				if (value == null || isStringAndEmpty) {
 					//如果是空值 使用is null指令
