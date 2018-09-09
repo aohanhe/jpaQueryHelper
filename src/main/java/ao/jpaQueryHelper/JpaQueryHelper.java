@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
@@ -76,7 +78,9 @@ public class JpaQueryHelper {
 					String.format("bean类%s没有添加@JpaQueryBean注解", queryBean.getClass().getName()));
 
 		Class<?> entityClass = beanInfo.entityClass();
-		String entityName = beanInfo.entityName();
+		var entity=entityClass.getAnnotation(Entity.class);
+		String entityName = entity.name();
+			
 
 		if (StringUtils.isEmpty(entityName))
 			entityName = entityClass.getSimpleName();

@@ -8,7 +8,7 @@ import ao.jpaQueryHelper.annotations.Expression;
 import ao.jpaQueryHelper.annotations.JpaQueryBean;
 import ao.jpaQueryHelper.annotations.Or;
 
-@JpaQueryBean(entityClass = Book.class, entityName = "Book")
+@JpaQueryBean(entityClass = Book.class)
 public class TestQuery1 extends PageJpaQueryBean{
 	
 	@CanNull

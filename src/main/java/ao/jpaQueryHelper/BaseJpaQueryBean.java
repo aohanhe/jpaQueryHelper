@@ -39,9 +39,9 @@ public class BaseJpaQueryBean implements Serializable{
 		if(sort!=null) {
 			orders=Stream.of(sort.split(","))
 				.map(v->{
-					if(v.endsWith("+"))
+					if(v.startsWith("+"))
 						return Order.asc(v.substring(0,v.length()-1));
-					if(v.endsWith("-"))
+					if(v.startsWith("-"))
 						return Order.desc(v.substring(0, v.length()-1));
 					return Order.asc(v);
 				}).collect(Collectors.toList());

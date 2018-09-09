@@ -17,10 +17,5 @@ public @interface JpaQueryBean {
 	 * 对应的实体类
 	 * @return
 	 */
-	Class<?> entityClass();
-	/**
-	 * 对应的实体的名称
-	 * @return
-	 */
-	String entityName();
+	Class<?> entityClass();	
 }
