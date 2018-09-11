@@ -72,7 +72,7 @@ public abstract class SelectExpressionCollection <T>{
 		 * @throws SecurityException
 		 */
 		public SelectExpressionItem(String name,Expression express,Class<K> classType) 
-				throws JpaQueryHelperException, NoSuchFieldException, SecurityException {
+				throws JpaQueryHelperException,  SecurityException {
 			if(Strings.isBlank(name))
 				throw new JpaQueryHelperException("参数name不允许为空");
 			if(express==null)
@@ -80,7 +80,11 @@ public abstract class SelectExpressionCollection <T>{
 			if(classType==null)
 				throw new JpaQueryHelperException("参数classType不允许为空");
 			
-			field=classType.getDeclaredField(name);
+			try {
+				field=classType.getDeclaredField(name);
+			} catch (NoSuchFieldException e) {
+				throw new JpaQueryHelperException(String.format("实体类%s 没有这字段%s", classType.getName() ,name));
+			}
 			field.setAccessible(true);
 			this.name=name;
 			this.express=express;
